@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chatbot-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .bot-message {
+            background: #f0f0f0;
+            align-self: flex-start;
+            color: #333;
+        }
+
+        .user-message {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .chatbot-input-area {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chatbot-header">
+            <h1>Grocery Shop Assistant</h1>
+        </div>
+        <div class="chatbot-messages" id="messages"></div>
+        <div class="chatbot-input-area">
+            <input type="text" id="userInput" placeholder="Type your message..." autocomplete="off">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { name: 'apple', price: 80 },
+            { name: 'banana', price: 50 },
+            { name: 'milk', price: 120 },
+            { name: 'bread', price: 90 },
+            { name: 'rice', price: 350 },
+            { name: 'tomato', price: 60 },
+            { name: 'carrot', price: 45 },
+            { name: 'cheese', price: 200 },
+            { name: 'yogurt', price: 150 },
+            { name: 'chicken', price: 300 }
+        ];
+
+        const responses = {
+            greeting: ['Welcome to our Grocery Shop!', 'Hi! Looking for fresh groceries today?'],
+            products: ['We have fresh fruits, vegetables, dairy, meat, and pantry staples. We offer: apples, bananas, milk, bread, rice, tomatoes, carrots, cheese, yogurt, and chicken.',
+                      'Our grocery selection includes: apples, bananas, milk, bread, rice, tomatoes, carrots, cheese, yogurt, and fresh chicken.'],
+            price: 'The {product} costs ₹{price}.',
+            unknown: ['I didn\'t understand that. Try asking about products or prices.', 'Can you rephrase that?']
+        };
+
+        function getRandomResponse(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function findProduct(text) {
+            return products.find(p => text.toLowerCase().includes(p.name));
+        }
+
+        function processInput(input) {
+            const lowerInput = input.toLowerCase();
+
+            if (/hello|hi|hey|greetings/.test(lowerInput)) {
+                return getRandomResponse(responses.greeting);
+            }
+
+            if (/option|options|list|menu/.test(lowerInput)) {
+                let optionsList = 'Here are all our products with prices:\n\n';
+                products.forEach(product => {
+                    optionsList += `${product.name.charAt(0).toUpperCase() + product.name.slice(1)} - ₹${product.price}\n`;
+                });
+                return optionsList;
+            }
+
+            if (/product|what.*sell|available|stock/.test(lowerInput)) {
+                return getRandomResponse(responses.products);
+            }
+
+            if (/price|cost|how much/.test(lowerInput)) {
+                const product = findProduct(lowerInput);
+                if (product) {
+                    return responses.price
+                        .replace('{product}', product.name)
+                        .replace('{price}', product.price);
+                }
+                return 'Which product would you like to know the price for?';
+            }
+
+            return getRandomResponse(responses.unknown);
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${sender}-message`;
+            messageEl.textContent = text;
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            addMessage(text, 'user');
+            input.value = '';
+
+            setTimeout(() => {
+                const reply = processInput(text);
+                addMessage(reply, 'bot');
+            }, 300);
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        window.addEventListener('load', () => {
+            addMessage('Welcome to Grocery Shop! Type "options" to see all products.', 'bot');
+            setTimeout(() => {
+                const menuReply = processInput('options');
+                addMessage(menuReply, 'bot');
+            }, 500);
+        });
+    </script>
+</body>
+</html>
